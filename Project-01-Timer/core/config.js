@@ -1,23 +1,26 @@
 // core/config.js
-export const APP_CONFIG = {
-    // 快捷键配置
-    KEYBOARD: {},
-    // UI配置
-    UI: {}
-};
-// ... (保留 DEFAULT_DOMAIN_CONFIG 和 appState 其余部分) ...
-export const DEFAULT_DOMAIN_CONFIG = {
-    pluginEnabled: false,
+/**
+ * 全局配置结构（单独存储，解决工作日自定义/全局默认配置）
+ */
+export const DEFAULT_GLOBAL_CONFIG = {
+    requireInteraction: true, //true:需要点击关闭
+    silent: false, //false:有声音提醒
+    workdayWeeks: [1,2,3,4,5],             // 自定义工作日（全局唯一配置）
+    version: "1.0.0",                     // 配置版本（后续拓展兼容用）
 };
 export const appState = {
-    //--------该网站独有的存储属性-------
-    domainConfigStorage : storage.defineItem(`local:${window.location.hostname}`, {
-        fallback: DEFAULT_DOMAIN_CONFIG //不存在则创建并存储
+    globalConfigStorage:storage.defineItem(`local:reminder_global_config`, {
+        fallback: DEFAULT_GLOBAL_CONFIG //不存在则创建并存储
     }),
-    domainConfig: {
-        isPluginEnabled: false, //是否启用插件
+    globalConfig: {},
+    saveGlobalConfig:async () => {
+        await appState.globalConfigStorage.setValue(appState.globalConfig)
     },
-    saveDomainConfig:async () => {
-        await appState.domainConfigStorage.setValue(appState.domainConfig)
+    reminderTasksStorage:storage.defineItem(`local:reminder_tasks`, {
+        // fallback: DEFAULT_GLOBAL_CONFIG //不存在则创建并存储
+    }),
+    reminderTasks: [],
+    saveReminderTasks:async () => {
+        await appState.reminderTasksStorage.setValue(appState.reminderTasks)
     }
 };

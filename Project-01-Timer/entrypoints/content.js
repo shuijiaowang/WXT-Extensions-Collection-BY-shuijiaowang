@@ -16,11 +16,9 @@ export default defineContentScript({
 
     // 脚本注入后执行的核心逻辑
     async main() {
-
-
         // 调用业务模块的初始化函数
-        console.log("插件初始化")
-        await initMessaging(); //监听消息
-        await init(); //初始化。
+        // console.log("插件初始化")
+        // await initMessaging(); //监听消息
+        // await init(); //初始化。
     },
 });
