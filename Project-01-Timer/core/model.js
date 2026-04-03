@@ -64,30 +64,32 @@ export const REMINDER_TASK_SCHEMA = {
         { type: "progress", value: 75, enabled: true },
         // 规则2：剩余10分钟提醒（适配倒计时/定时任务）
         { type: "remaining", value: 600, enabled: true },
-        // 规则3：开始时提醒（全局通用）
-        { type: "start", enabled: true },
     ],
 
     // ===================== 4. 类型专属配置（仅对应type存在，无冗余）=====================
     // --------- 4.1 基础倒计时（type=countdown）---------
+    // 与 timer 同属「何时触发」：timer 用可读字符串，countdown 用 Unix ms（便于计算）；idle 未启动一般为 null
     countdown: {
+        startTime: null,                   // 记录开始时间，10：00
         totalSeconds: 1500,                 // 总时长（秒）：25分钟
-        // runtime：运行时数据（暂停/恢复必备，不参与模板复用）
-        runtime: {
-            remainingSeconds: 1500,           // 剩余时长（秒）
-            startTime: null,                   // 本次开始时间
-            endTime: null,                    // 预计结束时间
-        }
+        targetTime: null,                   // 下次触发时刻，维护，方便遍历（可等于endtime，又可能是75%时的时间）10：20，
+        remainingSeconds: 1500,           // 剩余时长（秒）
+
+        //如果在10：10分时，暂停了，怎么搞？开始时间不变，剩余时间变为1500-10*60=900，状态为paused？下次触发事件不知道了为null，
+        //在10：20点击继续，开始时间不变，剩余时间变为900，下次触发时间变为10：30（75%），预计结束10：35，
+
+        //提醒规则，还需要计算当剩余时间等于75？10分钟时？触发提醒
+        //我需要写创建/启动/暂停/结束时方法对于属性修改。
     },
 
     // --------- 4.2 基础定时（type=timer）---------
     timer: {
-        targetTime: "2026-04-02 08:00:00",  // 目标触发时间
+        targetTime: "2026-04-02 08:00:00",  // 目标触发时间（可读串；与 countdown.targetTime 同语义，表示法不同）
         repeat: {
             enabled: false,                   // 是否重复
             mode: "workday",                  // 重复模式
             // mode枚举：once=单次 | everyday=每日 | workday=工作日 | weekly=每周 | custom=自定义
-            weeks: [1,2,3,4,5],               // 周几重复（0=周日，1-6=周一至周六）
+            weeks: [1, 2, 3, 4, 5],               // 周几重复（0=周日，1-6=周一至周六）
             // 工作日配置：关联全局配置（不重复存储，节省空间）
         }
     },
@@ -123,14 +125,14 @@ export const REMINDER_TASK_SCHEMA = {
                 status: "idle",
                 config: { requireInteraction: true },
                 remindRules: [{ type: "progress", value: 75, enabled: true }],
-                countdown: { totalSeconds: 1500, runtime: { remainingSeconds: 1500 } }
+                countdown: { totalSeconds: 1500, targetTime: null, runtime: { remainingSeconds: 1500 } }
             },
             {
                 id: "sub_2",
                 name: "休息5分钟",
                 type: "countdown",
                 status: "idle",
-                countdown: { totalSeconds: 300, runtime: { remainingSeconds: 300 } }
+                countdown: { totalSeconds: 300, targetTime: null, runtime: { remainingSeconds: 300 } }
             }
         ],
         currentTaskIndex: 0,                // 当前执行的子任务索引（同步队列必备）
@@ -144,5 +146,37 @@ export const REMINDER_TASK_SCHEMA = {
         totalFinishCount: 0,                 // 总完成次数
     }
 };
+
+
+export const CountdownModel = {
+    id: "",        
+    name: "",                   
+    type: "countdown",                       
+    status: "idle",                       // 任务状态 idle=闲置 | running=运行中 | paused=暂停 | finished=已完成 | disabled=已禁用
+    createdAt: "2026-04-02 12:00:00",     // 创建时间
+    updatedAt: "2026-04-02 12:00:00",     // 更新时间（自动维护）
+    config: {
+        requireInteraction: true,           // 通知常驻（覆盖全局配置）
+        silent: false,                      // 通知静音（覆盖全局配置）
+    },
+    remindRules: [
+        // 规则1：进度75%提醒
+        { type: "progress", value: 75, enabled: true },
+        // 规则2：剩余10分钟提醒
+        { type: "remaining", value: 600, enabled: true },
+    ],
+
+    startTime: null,                   // 记录开始时间，10：00
+    totalSeconds: 1500,                 // 总时长（秒）：25分钟
+    targetTime: null,                   // 下次触发时刻，维护，方便遍历（可等于endtime，又可能是75%时的时间）10：20，
+    remainingSeconds: 1500,           // 剩余时长（秒）
+    
+    statistics: {
+        totalExecSeconds: 0,                // 总执行时长（秒）
+        completeCount: 0,                   // 完成次数
+        lastExecTime: null,                 // 最后执行时间
+        totalFinishCount: 0,                 // 总完成次数
+    }
+}
 
 

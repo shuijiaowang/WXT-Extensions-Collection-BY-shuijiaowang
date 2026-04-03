@@ -5,7 +5,7 @@ import {appState} from "./config.js";
 /**
  * 通用创建任务（底层方法）
  */
-async function createBaseTask(payload) {
+export async function createBaseTask(payload) {
     const task = {
         id: generateId(),
         name: payload.name,
@@ -16,8 +16,8 @@ async function createBaseTask(payload) {
         updatedAt: Date.now(),
 
         config: {
-            requireInteraction: true,
-            silent: false,
+            // requireInteraction: true,
+            // silent: false,
             ...payload.config,
         },
 
@@ -43,30 +43,6 @@ async function createBaseTask(payload) {
     appState.reminderTasks.push(task)
     await appState.saveReminderTasks()
     return task
-}
-
-
-/**
- * 添加倒计时任务
- * @param {string} name 任务名
- * @param {number} totalSeconds 总秒数
- * @param {object} options 可选配置 { remindRules, config }
- */
-export async function addCountdownTask(name, totalSeconds, options = {}) {
-    return createBaseTask({
-        name,
-        type: 'countdown',
-        remindRules: options.remindRules,
-        config: options.config,
-        countdown: {
-            totalSeconds,
-            runtime: {
-                remainingSeconds: totalSeconds,
-                startTime: null,
-                endTime: null,
-            },
-        },
-    })
 }
 
 /**

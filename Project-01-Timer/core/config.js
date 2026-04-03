@@ -3,7 +3,7 @@
  * 全局配置结构（单独存储，解决工作日自定义/全局默认配置）
  */
 export const DEFAULT_GLOBAL_CONFIG = {
-    requireInteraction: true, //true:需要点击关闭
+    requireInteraction: false, //true:需要点击关闭
     silent: false, //false:有声音提醒
     workdayWeeks: [1,2,3,4,5],             // 自定义工作日（全局唯一配置）
     version: "1.0.0",                     // 配置版本（后续拓展兼容用）
