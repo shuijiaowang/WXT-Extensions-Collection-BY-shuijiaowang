@@ -47,6 +47,7 @@ export const useConfigStore = defineStore('config', () => {
             fallback: DEFAULT_DOMAIN_CONFIG //不存在则创建并存储
         })
         appState.domainConfig=appState.domainConfigStorage.getValue()
+
     }
     // 一键初始化
     const initAll = async () => {

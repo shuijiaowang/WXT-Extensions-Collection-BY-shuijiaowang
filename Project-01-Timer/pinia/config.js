@@ -1,84 +1,61 @@
-import { defineStore } from 'pinia'
-import { ref, reactive } from 'vue'
-import {appState as externalAppState, DEFAULT_DOMAIN_CONFIG} from '../core/config.js';
-import * as domain from "node:domain";
+import {defineStore} from 'pinia';
+import {reactive} from 'vue';
+import {appState, DEFAULT_GLOBAL_CONFIG,} from '../core/config.js';
+
+/**
+ * 全局只有一份 appState（core）。Popup 里需要响应式，所以在 init 时把 globalConfig 换成 reactive，
+ * 之后界面和 background 都读 appState.globalConfig 即可，不必再维护第二个名字。
+ */
 export const useConfigStore = defineStore('config', () => {
 
-    // 标签页等，获取url，域名等相关信息
-    // 激活标签页
-    const activeTab = ref(null)
-    // 标签页相关信息（统一管理）
-    const tabInfo = reactive({
-        url: '',
-        domain: '',
-        title: '',
-        favIcon: ''
-    })
-    // 获取当前标签页
-    const initActiveTab = async () => {
-        try {
-            const [tab] = await browser.tabs.query({ active: true, currentWindow: true })
-            activeTab.value = tab
-            return tab
-        } catch (err) {
-            console.error('获取标签失败', err)
-            return null
+    const appState = reactive({
+        globalConfig: {...DEFAULT_GLOBAL_CONFIG},
+        reminderTasks: [],
+    });
+    const appStateManager = {
+        globalConfigStorage: storage.defineItem(`local:reminder_global_config`, {
+            init: () => ({...DEFAULT_GLOBAL_CONFIG})//不存在则创建并存储
+        }),
+        saveGlobalConfig: async () => {
+            await appStateManager.globalConfigStorage.setValue(appState.globalConfig)
+        },
+        unwatchGlobalConfig: storage.watch('local:reminder_global_config', async (newValue, oldValue) => {
+            appState.globalConfig = await appStateManager.globalConfigStorage.getValue()
+            console.log('全局配置变化', appState.globalConfig);
+        }),
+        reminderTasksStorage: storage.defineItem(`local:reminder_tasks`, {
+            // fallback: DEFAULT_GLOBAL_CONFIG //不存在则创建并存储
+        }),
+        reminderTasks: [],
+        saveReminderTasks: async () => {
+            await appStateManager.reminderTasksStorage.setValue(appState.reminderTasks)
         }
     }
-    // 解析信息（统一更新 tabInfo）
-    const resolveTabInfo = (tab) => {
-        if (!tab?.url) {
-            tabInfo.domain = '无法识别'
-            return
-        }
 
-        const { hostname } = new URL(tab.url)
-        tabInfo.url = tab.url
-        tabInfo.domain = hostname
-        tabInfo.title = tab.title || ''
-        tabInfo.favIcon = tab.favIconUrl || ''
+    async function initAppState() {
+        appState.globalConfig = await appStateManager.globalConfigStorage.getValue()
+        appState.reminderTasks = (await appStateManager.reminderTasksStorage.getValue()) ?? []
     }
-    //popup页面的全局状态
-    const appState = externalAppState;
-    //
-    const initAppState=()=>{
-        appState.activeTab=activeTab
-        appState.domainConfigStorage=storage.defineItem(`local:${tabInfo.domain}`, {
-            fallback: DEFAULT_DOMAIN_CONFIG //不存在则创建并存储
-        })
-        appState.domainConfig=appState.domainConfigStorage.getValue()
-    }
-    // 一键初始化
-    const initAll = async () => {
-        const tab = await initActiveTab()
-        tab && resolveTabInfo(tab)
-        initAppState()
-    }
-    onMounted(async () => {
-        await initAll()
-    })
 
-    //消息通信
-    const notifyContentScript = async (type) => {
-        if (!activeTab.value?.id) return;
-        //'PLUGIN_TOGGLE'
-        await browser.tabs.sendMessage(activeTab.value.id, {type: type});
-    };
-    const notifyBackgroundScript = async (type) => {
-        //'PLUGIN_TOGGLE'
+    async function persistGlobalConfig() {
+        await appStateManager.saveGlobalConfig(); //保存
+        browser.runtime.sendMessage({type: 'change'}); //通知background重启
+    }
+
+    const notifyBackgroundScript = async () => {
         await browser.runtime.sendMessage({
-            action: 'hello',       // 自定义类型，方便区分
-            payload: '我是来自popup的消息'
+            action: 'hello',
+            payload: '我是来自popup的消息',
         });
     };
+    onMounted(async () => {
+        await initAppState()
+    })
 
-    // 统一导出
     return {
-        activeTab,
-        tabInfo,
         appState,
-        initAll,
-        notifyContentScript,
-        notifyBackgroundScript
-    }
-})
+        appStateManager,
+        persistGlobalConfig,
+        notifyBackgroundScript,
+    };
+});

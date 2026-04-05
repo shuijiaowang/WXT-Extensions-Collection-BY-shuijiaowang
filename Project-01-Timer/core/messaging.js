@@ -25,7 +25,7 @@ export function initMessaging(){
             const top = Math.round((currentWindow.height - height) / 2);
             // 打开居中窗口
             await browser.windows.create({
-                url: "/popup2.html", // 你的 popup 页面 //这里需要是实际的popup.html，而不是/popup/index.html,不然会找不到
+                url: "/popup_true.html", // 你的 popup 页面 //这里需要是实际的popup.html，而不是/popup/index.html,不然会找不到
                 type: "popup", // 无边栏窗口
                 // type: "normal", // 无边栏窗口
                 width,

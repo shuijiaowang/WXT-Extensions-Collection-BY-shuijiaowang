@@ -42,13 +42,10 @@ export function getNearestTriggerTask(nowTs) {
 
 /** idle 的倒计时被调度选中时，写入 start/end，便于与 storage 一致 */
 export async function ensureCountdownRunning(task) {
-    startCountdownTask(task)
+    startCountdownTask(task) //启动
     await appState.saveReminderTasks();
 }
 
-export function getTaskTriggerTime(task) {
-    return task.targetTime;
-}
 
 /** 到时回调：落库 + 通知（后续可拆出 remindRules、队列等） */
 export async function handleTaskTrigger(task) {
