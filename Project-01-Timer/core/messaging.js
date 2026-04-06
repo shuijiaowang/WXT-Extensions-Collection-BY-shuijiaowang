@@ -1,19 +1,14 @@
-import {showToast} from "../utils/ui/showToast.js";
-import {init} from "./init.js";
+import {init} from "@/core/init.js";
 
-export function initMessaging(){
-    // 监听来自 Popup 的消息，触发会启动插件或是更新配置参数
-    browser.runtime.onMessage.addListener(async (message) => {
-        showToast("配置更新")
-        //监听插件是否启用
-        if (message.type === 'PLUGIN_TOGGLE') {
+export function initMessaging() {
+
+    browser.runtime.onMessage.addListener(async (msg) => {
+        if (msg.type === 'change') {
             await init()
         }
     });
 
-    // ==============================================
 // 监听来自 popup 的「打开消息」
-// ==============================================
     browser.runtime.onMessage.addListener(async (msg, sender, sendResponse) => {
         if (msg.type === "POPUP_OPENED") {
             const currentWindow = await browser.windows.getCurrent();
@@ -35,5 +30,26 @@ export function initMessaging(){
             });
         }
     });
+
+    // 监听 Popup 连接（自动处理，不用改）
+    browser.runtime.onConnect.addListener(port => {
+        if (port.name === "popup") popupPort = port;
+        port.onDisconnect.addListener(() => popupPort = null);
+    });
+
+    // setInterval(() => {
+    //     // 自动判断：Popup打开就发，关闭就跳过，无报错
+    //     popupPort?.postMessage({
+    //         type: "BACKGROUND_TO_POPUP",
+    //         data: "后台主动发送的消息"
+    //     });
+    // }, 1000);
 }
+// 存储 Popup 连接（自动管理，无需手动操作）
+let popupPort = null;
+export const notifyPopup = async () => {
+    popupPort?.postMessage({
+        type: "change",
+    });
+};
 

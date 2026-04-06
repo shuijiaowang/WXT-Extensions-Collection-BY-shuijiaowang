@@ -1,4 +1,8 @@
 // core/config.js
+import {scheduleNextTask} from "@/core/taskScheduler.js";
+import {init} from "@/core/init.js";
+import {notifyPopup} from "@/core/messaging.js";
+
 /**
  * 全局配置结构（单独存储，解决工作日自定义/全局默认配置）
  */
@@ -17,20 +21,20 @@ export const appState = {
     },
     saveGlobalConfig:async () => {
         await appState.globalConfigStorage.setValue(appState.globalConfig)
+        await notifyPopup()
     },
-    unwatchGlobalConfig:storage.watch('local:reminder_global_config', async (newValue,oldValue) => {
-        appState.globalConfig = await appState.globalConfigStorage.getValue()
-        console.log('全局配置变化',appState.globalConfig);
-    }),
+    // unwatchGlobalConfig:storage.watch('local:reminder_global_config', async (newValue,oldValue) => {
+    //     await init()
+    // }),
     reminderTasksStorage:storage.defineItem(`local:reminder_tasks`, {
         // fallback: DEFAULT_GLOBAL_CONFIG //不存在则创建并存储
     }),
     reminderTasks: [],
     saveReminderTasks:async () => {
         await appState.reminderTasksStorage.setValue(appState.reminderTasks)
+        await notifyPopup()
     },
-    unwatchReminderTasks:storage.watch('local:reminder_tasks', async (newValue,oldValue) => {
-        appState.reminderTasks = await appState.reminderTasksStorage.getValue()
-        console.log('全局存储变化',appState.reminderTasks);
-    }),
+    // unwatchReminderTasks:storage.watch('local:reminder_tasks', async (newValue,oldValue) => {
+    //     await init()
+    // }),
 };

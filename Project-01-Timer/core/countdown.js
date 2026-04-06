@@ -99,6 +99,7 @@ export function startCountdownTask(task, nowTs = Date.now()) {
     }
 
     task.status = 'running';
+    console.log("这里为啥不修改为“running？？")
     task.startTime = nowTs;
     task.endTime = nowTs + (task.remainingSeconds ?? 0) * 1000;
     task.targetTime=updateCountdownTargentTime(task, nowTs = Date.now())

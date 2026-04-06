@@ -47,19 +47,24 @@ export const useConfigStore = defineStore('config', () => {
 
     async function persistGlobalConfig() {
         await appStateManager.saveGlobalConfig(); //保存
+        await notifyBackgroundScript()
     }
     async function persistReminderTasks() {
         await appStateManager.saveReminderTasks(); //保存
+        await notifyBackgroundScript()
     }
 
     const notifyBackgroundScript = async () => {
         await browser.runtime.sendMessage({
-            action: 'hello',
-            payload: '我是来自popup的消息',
+            type: 'change',
         });
     };
     onMounted(async () => {
         await initAppState()
+        browser.runtime.connect({ name: "popup" }).onMessage.addListener(async msg => {
+            console.log("Popup 收到消息：", msg);
+            await initAppState()
+        });
     })
 
     return {

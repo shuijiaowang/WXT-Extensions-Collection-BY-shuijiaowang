@@ -43,6 +43,8 @@ export function getNearestTriggerTask(nowTs) {
 /** idle 的倒计时被调度选中时，写入 start/end，便于与 storage 一致 */
 export async function ensureCountdownRunning(task) {
     startCountdownTask(task) //启动
+    //这里执行了？
+    console.log("这里不对吗",task,task.status,appState.reminderTasks) //这里不是同一个指针了？为啥
     await appState.saveReminderTasks();
 }
 
@@ -55,4 +57,36 @@ export async function handleTaskTrigger(task) {
         {title: `倒计时结束 · ${task.name}`, message: '时间到'},
         task.config,
     );
+}
+
+
+/**
+ * 【核心】调度：找到最近要触发的任务，设置 setTimeout
+ * 每次任务增删改、触发完成，都调用一次
+ */
+let currentTimeoutId = null;
+
+export async function scheduleNextTask() {
+    if (currentTimeoutId) {
+        clearTimeout(currentTimeoutId);
+        currentTimeoutId = null;
+    }
+
+    // 找到最近要触发的任务
+    const nearestTask = getNearestTriggerTask(now());
+    if (!nearestTask) {
+        console.log("✅ 暂无待执行任务");
+        return;
+    }
+
+    await ensureCountdownRunning(nearestTask);
+
+    const delayMs = Math.max(0, nearestTask.targetTime - now());
+
+    console.log(`⏱ 即将执行任务: ${nearestTask.name}`, `等待 ${(delayMs / 1000).toFixed(1)}s`);
+
+    currentTimeoutId = setTimeout(async () => {
+        await handleTaskTrigger(nearestTask);
+        await scheduleNextTask();
+    }, delayMs);
 }
