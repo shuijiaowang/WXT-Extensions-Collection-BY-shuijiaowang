@@ -16,7 +16,7 @@ const WEEK_LABELS = [
 
 function toggleWorkday(v) {
   const w = store.appState.globalConfig.workdayWeeks;
-  console.log("这是啥，是数组吗",w,w[1])
+  console.log(w,w,w,w,w,w,w,w)
   const i = w.indexOf(v);
   if (i >= 0) w.splice(i, 1);
   else w.push(v);
@@ -50,6 +50,7 @@ async function save() {
             :key="d.v"
             type="button"
             class="day"
+            :class="{ on: store.appState.globalConfig.workdayWeeks?.includes(d.v) }"
             @click="toggleWorkday(d.v)"
         >
           {{ d.label }}

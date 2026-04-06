@@ -158,4 +158,13 @@ test:
   test1: this is test1
   test2: this is test2
 ```
+### 注意事项。
+
+```js
+//注意事项，vue的响应式变量，数组，进行storage存储时，会被转为map对象进行存储，
+await appStateManager.globalConfigStorage.setValue({
+    ...appState.globalConfig,
+    workdayWeeks: [...appState.globalConfig.workdayWeeks] // 纯数组存进去,不然会被改为对象。
+})
+```
 

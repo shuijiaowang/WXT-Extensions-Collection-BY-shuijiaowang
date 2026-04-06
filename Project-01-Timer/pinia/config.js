@@ -17,7 +17,11 @@ export const useConfigStore = defineStore('config', () => {
             init: () => ({...DEFAULT_GLOBAL_CONFIG})//不存在则创建并存储
         }),
         saveGlobalConfig: async () => {
-            await appStateManager.globalConfigStorage.setValue(appState.globalConfig)
+            // await appStateManager.globalConfigStorage.setValue(appState.globalConfig)
+            await appStateManager.globalConfigStorage.setValue({
+                ...appState.globalConfig,
+                workdayWeeks: [...appState.globalConfig.workdayWeeks] // 纯数组存进去,不然会被改为对象。
+            })
         },
         unwatchGlobalConfig: storage.watch('local:reminder_global_config', async (newValue, oldValue) => {
             appState.globalConfig = await appStateManager.globalConfigStorage.getValue()
@@ -33,8 +37,8 @@ export const useConfigStore = defineStore('config', () => {
     }
 
     async function initAppState() {
-        appState.globalConfig = await appStateManager.globalConfigStorage.getValue()
-        appState.reminderTasks = (await appStateManager.reminderTasksStorage.getValue()) ?? []
+        appState.globalConfig=await appStateManager.globalConfigStorage.getValue()
+
     }
 
     async function persistGlobalConfig() {
