@@ -1,6 +1,7 @@
 import {defineStore} from 'pinia';
 import {reactive} from 'vue';
 import {appState, DEFAULT_GLOBAL_CONFIG,} from '../core/config.js';
+import {toPlain} from "@/core/toPlain.js";
 
 /**
  * 全局只有一份 appState（core）。Popup 里需要响应式，所以在 init 时把 globalConfig 换成 reactive，
@@ -18,32 +19,37 @@ export const useConfigStore = defineStore('config', () => {
         }),
         saveGlobalConfig: async () => {
             // await appStateManager.globalConfigStorage.setValue(appState.globalConfig)
-            await appStateManager.globalConfigStorage.setValue({
-                ...appState.globalConfig,
-                workdayWeeks: [...appState.globalConfig.workdayWeeks] // 纯数组存进去,不然会被改为对象。
-            })
+            await appStateManager.globalConfigStorage.setValue(
+                toPlain(appState.globalConfig)
+            )
         },
         unwatchGlobalConfig: storage.watch('local:reminder_global_config', async (newValue, oldValue) => {
             appState.globalConfig = await appStateManager.globalConfigStorage.getValue()
             console.log('全局配置变化', appState.globalConfig);
         }),
         reminderTasksStorage: storage.defineItem(`local:reminder_tasks`, {
-            // fallback: DEFAULT_GLOBAL_CONFIG //不存在则创建并存储
+            fallback:[]
         }),
         reminderTasks: [],
         saveReminderTasks: async () => {
-            await appStateManager.reminderTasksStorage.setValue(appState.reminderTasks)
-        }
+            await appStateManager.reminderTasksStorage.setValue(toPlain(appState.reminderTasks))
+        },
+        unwatchReminderTasks:storage.watch('local:reminder_tasks', async (newValue,oldValue) => {
+            appState.reminderTasks = await appStateManager.reminderTasksStorage.getValue()
+            console.log('全局存储变化',appState.reminderTasks);
+        }),
     }
 
     async function initAppState() {
         appState.globalConfig=await appStateManager.globalConfigStorage.getValue()
-
+        appState.reminderTasks = await appStateManager.reminderTasksStorage.getValue()
     }
 
     async function persistGlobalConfig() {
         await appStateManager.saveGlobalConfig(); //保存
-        browser.runtime.sendMessage({type: 'change'}); //通知background重启
+    }
+    async function persistReminderTasks() {
+        await appStateManager.saveReminderTasks(); //保存
     }
 
     const notifyBackgroundScript = async () => {
@@ -60,6 +66,7 @@ export const useConfigStore = defineStore('config', () => {
         appState,
         appStateManager,
         persistGlobalConfig,
+        persistReminderTasks,
         notifyBackgroundScript,
     };
 });

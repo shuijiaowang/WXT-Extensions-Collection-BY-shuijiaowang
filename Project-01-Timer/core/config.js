@@ -28,5 +28,9 @@ export const appState = {
     reminderTasks: [],
     saveReminderTasks:async () => {
         await appState.reminderTasksStorage.setValue(appState.reminderTasks)
-    }
+    },
+    unwatchReminderTasks:storage.watch('local:reminder_tasks', async (newValue,oldValue) => {
+        appState.reminderTasks = await appState.reminderTasksStorage.getValue()
+        console.log('全局存储变化',appState.reminderTasks);
+    }),
 };
