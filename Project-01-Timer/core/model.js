@@ -179,4 +179,37 @@ export const CountdownModel = {
     }
 }
 
+export const TimerModel = {
+    id: "",
+    name: "",
+    type: "timer",
+    status: "idle",                       // 任务状态 idle=闲置 | running=运行中 | paused=暂停 | finished=已完成 | disabled=已禁用
+    createdAt: "2026-04-02 12:00:00",     // 创建时间
+    updatedAt: "2026-04-02 12:00:00",     // 更新时间（自动维护）
+    config: {
+        requireInteraction: true,           // 通知常驻（覆盖全局配置）
+        silent: false,                      // 通知静音（覆盖全局配置）
+        weeks: [1, 2, 3, 4, 5,6,7],         // 工作日
+    },
+    remindRules: [
+        // 规则：提前10分钟提醒
+        { type: "remaining", value: 600, enabled: true },
+    ],
+    repeat: {
+        enabled: false,                   // 是否重复
+        mode: "workday",                  // 重复模式
+        // mode枚举：once=单次 | everyday=每日 | workday=工作日 | weekly=每周 | custom=自定义
+        weeks: [1, 2, 3, 4, 5],               // 周几重复（0=周日，1-6=周一至周六）
+        // 工作日配置：关联全局配置（不重复存储，节省空间）
+    },
+    endTime:'16:00',                    // 定时时间？
+    targetTime: null,                   // 下次触发时刻，定时器的话，只定义提前提前多久。
+    remainingSeconds: 1500,           // 剩余时长（秒）
+
+    statistics: {
+        totalFinishCount: 0,                 // 总完成次数
+    }
+}
+
+
 
